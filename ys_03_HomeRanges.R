@@ -107,7 +107,7 @@ for (i in 1:length(indNames)) {
                                      login=loginStored,
                                      animalName = indNames[i],
                                      timestamp_start="20190101000000000",
-                                     timestamp_end="20190231235959000")
+                                     timestamp_end="20211231235959000")
   
   # Remove outlier & extract only interesting columns (reduce the weight of the dataset)
   indData <- indData[which(indData$visible == "true"),c(1,3:5,11,14:17,21,24,26)]
@@ -383,12 +383,12 @@ allFiles <- list.files("./Data/FilteredIndData",all.files = FALSE, full.names = 
 allFiles <- allFiles[-c(2,7)]
 
 
-# Create the bounding box to sample random point
-centerCol <- SpatialPoints(coords = cbind(3.249370, 44.205059), CRS("+proj=longlat")) %>% 
-  st_as_sf(coords = c("x", "y")) %>% 
-  st_transform(CRS(paste("+proj=utm","+zone=31","+ellps=WGS84", "+datum=WGS84", "+units=m", "+towgs84:0,0,0", sep=" ")))
-
-poly <- st_buffer(centerCol, dist = 55000)
+# # Create the bounding box to sample random point
+# centerCol <- SpatialPoints(coords = cbind(3.249370, 44.205059), CRS("+proj=longlat")) %>% 
+#   st_as_sf(coords = c("x", "y")) %>% 
+#   st_transform(CRS(paste("+proj=utm","+zone=31","+ellps=WGS84", "+datum=WGS84", "+units=m", "+towgs84:0,0,0", sep=" ")))
+# 
+# poly <- st_buffer(centerCol, dist = 55000)
 
           
 # Create an object with all the operating turbine to estimate the distance to it after
@@ -407,6 +407,14 @@ allOperationalTurbines.sf <- allturbines %>%
 
 
 
+meanDistanceColony <- 26000
+
+Colcenter <- data.frame(x = 3.249370, y = 44.205059)
+df_to_spatial_df_utm(dataframe=Colcenter, 
+                     column_longitude="x", 
+                     column_latitude="y", 
+                     utm_zone=31, hemisphere="N")
+Colcenter_utm <- dataframe.sp_utm
 
 
 
@@ -442,8 +450,51 @@ for (f in 1:length(allFiles)){ # Loop on all individuals
   
    
   # Sample random point in the bbox and estimate the distance to the wind turbine
-  wantIndRdm <- random_points(poly, n=10*nrow(subindData.xyt), presence = subindData.xyt)
-
+  #wantIndRdm <- random_points(poly, n=10*nrow(subindData.xyt), presence = subindData.xyt)
+  
+  # Sample random point corrected for central place forager -> Benhamou & Courbon 2023
+  nPointsNull <- 10*nrow(subindData.xyt)
+  nRemaining <- nPointsNull
+  
+  c = 0 # Counter
+  while(nRemaining != 0){
+    
+    c = c+1 # counter
+    nPointsNull <- nRemaining
+    
+    # Sample within a reconstructed bivariate exponential distribution - 10time more random points
+    nullCoordinates <- data.frame(
+      dist = rexp(nPointsNull, 1/meanDistanceColony),
+      angle = runif(nPointsNull, 0, 2*pi)
+    ) %>% 
+      mutate(
+        x = Colcenter_utm@coords[[1]] + cos(angle)*dist,
+        y = Colcenter_utm@coords[[2]] + sin(angle)*dist
+      ) %>% 
+      filter(dist < 55000)
+    
+    if (c == 1){
+      nullCoordinates_full <- nullCoordinates
+      nRemaining <- 10*nrow(subindData.xyt) - nrow(nullCoordinates_full)
+      
+    } else {
+      nullCoordinates_full <- rbind(nullCoordinates_full, nullCoordinates)
+      nRemaining <- 10*nrow(subindData.xyt) - nrow(nullCoordinates_full)
+    }
+  }
+  
+  # Reorganised sampled random points
+  wantIndRdm <- nullCoordinates_full %>% 
+    mutate(case_ = FALSE) %>% 
+    rename("x_" = "x", "y_" = "y") %>% 
+    dplyr::select(c("x_", "y_", "case_")) %>% 
+    as_tibble()
+  
+  # Add real data to the sampled points
+  wantIndRdm <- rbind(wantIndRdm,
+                      subindData.xyt[,1:2] %>% 
+                        mutate(case_ = TRUE))
+  
   # Estimate convert to spatial each location
   wantIndRdm.sf <- wantIndRdm %>% 
     st_as_sf(coords = c("x_", "y_")) %>%
@@ -466,9 +517,8 @@ for (f in 1:length(allFiles)){ # Loop on all individuals
    
   
   # Visual check
-  # plot(wantIndRdm)
-  # plot(allOperationalTurbines.sf, col = "blue", legend = FALSE, add = T)
-  
+  # plot(wantIndRdm.sf)
+  # plot(allOperationalTurbines.sf$geometry, col = "black", legend = FALSE, add = T)
   
   #Fit the RSF model controlling for ind ID
   rsfRes <- glmmTMB(case_ ~ distanceClosestWindTurbine,
@@ -495,6 +545,30 @@ for (f in 1:length(allFiles)){ # Loop on all individuals
 }
 
 
-rsfRes.vec
-mean_95CI(rsfRes.vec) ## Do the 95% interval around the mean of exponential
-t.test(rsfRes.vec, mu = 1, type = "two.sided") # Evaluate if different from 1
+mean(rsfRes.vec)
+sd(rsfRes.vec)
+
+
+
+#### NEED TO TEST FOR NULL LOC CONSIDERING CPF
+
+library(dplyr)
+
+
+
+
+wantIndRdm.sf <- testRM %>% 
+  st_as_sf(coords = c("x_", "y_")) %>%
+  st_set_crs(CRS(paste("+proj=utm","+zone=31","+ellps=WGS84", "+datum=WGS84", "+units=m", "+towgs84:0,0,0", sep=" "))) # Convert to spatial
+
+
+# Estimate the distance with all operating turbines
+distanceMatrix <- st_distance(
+  wantIndRdm.sf,
+  allOperationalTurbines.sf
+) 
+
+# Keep for each location the distance to the closest turbine
+testRM$distanceClosestWindTurbine <- apply(distanceMatrix, 1, min) 
+
+
