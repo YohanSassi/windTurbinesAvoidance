@@ -452,7 +452,7 @@ for (f in 1:length(allFiles)){ # Loop on all individuals
   # Sample random point in the bbox and estimate the distance to the wind turbine
   #wantIndRdm <- random_points(poly, n=10*nrow(subindData.xyt), presence = subindData.xyt)
   
-  # Sample random point corrected for central place forager -> Benhamou & Courbon 2023
+  # Sample random point corrected for central place forager -> Benhamou & Courbin 2023
   nPointsNull <- 10*nrow(subindData.xyt)
   nRemaining <- nPointsNull
   
@@ -547,28 +547,3 @@ for (f in 1:length(allFiles)){ # Loop on all individuals
 
 mean(rsfRes.vec)
 sd(rsfRes.vec)
-
-
-
-#### NEED TO TEST FOR NULL LOC CONSIDERING CPF
-
-library(dplyr)
-
-
-
-
-wantIndRdm.sf <- testRM %>% 
-  st_as_sf(coords = c("x_", "y_")) %>%
-  st_set_crs(CRS(paste("+proj=utm","+zone=31","+ellps=WGS84", "+datum=WGS84", "+units=m", "+towgs84:0,0,0", sep=" "))) # Convert to spatial
-
-
-# Estimate the distance with all operating turbines
-distanceMatrix <- st_distance(
-  wantIndRdm.sf,
-  allOperationalTurbines.sf
-) 
-
-# Keep for each location the distance to the closest turbine
-testRM$distanceClosestWindTurbine <- apply(distanceMatrix, 1, min) 
-
-

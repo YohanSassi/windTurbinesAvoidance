@@ -402,7 +402,7 @@ plot(dataCoordinatesTurbines.df.sp_rotated, pch = 13, cex = 1.3 , add=TRUE)
 # Prepare a simulated data set for illustration
 bufferSize.v <- seq(from=50, to=1000, by=50) # Size of buffer that will be used around wind turbine (in meters)
 simuData.df <- data.frame(buffer = numeric(0), pctFix = numeric(0))
-c = 10
+c = 15
 
 for (i in 1:length(bufferSize.v)){
   
@@ -424,170 +424,94 @@ colnames(simuData.df) <- c("buffer","pctFixes")
 
 
 # Visual plot
-# ggplot(simuData.df, aes(x = pctFixes, y = as.factor(buffer))) +
-#   geom_density_ridges(quantiles = 0.025) +
-#   geom_point(aes(y="300",x=min(pctFixes[which(buffer == 300)])), shape = 18, col = "red", size = 2.5) +
-#   geom_segment(aes(x = min(pctFixes[which(buffer == 300)]), y = "300", xend = min(pctFixes[which(buffer == 300)]), yend = "50"), 
-#                color="red", 
-#                linetype="dashed", 
-#                size=0.5) +
-#   scale_x_continuous("Percentage of fixes") +
-#   scale_y_discrete("Buffer size", breaks = seq(from=100, to=1000, by=100)) +
-#   #theme_ridges() + 
-#   theme_light() +
-#   theme(legend.position = "none")
-
-
-
-# Vizual plot V2
-ggplot(simuData.df, aes(x = pctFixes, y = as.factor(buffer), fill = factor(stat(quantile)))) +
+ggplot(simuData.df, 
+       aes(x = pctFixes, y = as.factor(buffer), 
+           fill = factor(stat(quantile)))) +
   stat_density_ridges(
     geom = "density_ridges_gradient",
     calc_ecdf = T,
-    quantiles = 0.05
+    quantiles = 0.05,
+    scale = 1.2
   ) +
   scale_fill_manual(
     name = "Probability", values = c("#FF0000A0", "#A0A0A0A0"),
     labels = c("(0, 0.05]", "(0.05, 1]")
   ) +
-  scale_x_continuous("Percentage of fixes in buffer") +
-  scale_y_discrete("Buffer size", breaks = seq(from=100, to=1000, by=100)) +
+  scale_x_continuous("Percentage of locations in buffer") +
+  scale_y_discrete("Buffer size [m]", breaks = seq(from=100, to=1000, by=100)) +
   theme_light() +
-  theme(legend.position = c(.85, .1),
+  theme(legend.position = c(.90, .1),
         legend.text = element_text(size=17),
         legend.title = element_text(size=20),
         axis.text=element_text(size=17),
-        axis.title=element_text(size=20))
+        axis.title=element_text(size=20)) + 
+  coord_flip(expand = T) 
 
 
 
 
 #### Figure 3 - Plot the rotation result for Montfrech wind farm  ####
-
 load("./Outputs/AnalysisResults/RotationAnalysisResult2_allyears_S2.Rdata")
 
 f = 4 # Wind farm number
 
-# Plot of the results for below paths
+# Load img for plot illustration
+img <- readPNG("./Outputs/Figures/inTurbine.png")
+
+# Plot of the results for below paths (B)
 resBelow.df <- resultsRotationPvalueBelow.df[,2:4]
 
-below <- ggplot(resBelow.df, aes(x = as.integer(posObsValue), y = as.integer(bufferAroundTurbineMeter))) + 
-  coord_cartesian(xlim = c(1, 36), ylim = c(0, 1010)) +
+below <- ggplot(resBelow.df, aes(x = as.integer(bufferAroundTurbineMeter), y = as.integer(posObsValue))) + 
+  coord_cartesian(xlim = c(0, 1010), ylim = c(1, 36)) +
   expand_limits(x = 0, y = 0) +
-  scale_x_continuous("Position of the observed proportion of points", limits = c(0,36), breaks = seq(from=0, to=36, by=5)) +
-  scale_y_continuous("Buffer size [m]", breaks = seq(from=0, to=1010, by=200)) +
+  scale_y_continuous("Position of the observed 
+proportion of locations", limits = c(0,36), breaks = seq(from=0, to=36, by=5)) +
+  scale_x_continuous("Buffer size [m]", breaks = seq(from=0, to=1010, by=200)) +
   ggtitle("Within rotor swept zone") +
   theme_light() +
-  geom_rect(aes(xmin = 0 + 0.5, xmax = 2 - 0.5, ymin = 0 - 0.5, ymax = 1000 + 5, fill = "red"), color = "red",
+  geom_rect(aes(xmin = 0 - 0.5, xmax = 1000 + 5, ymin = 0 + 0.4, ymax = 2 - 0.4, fill = "red"), color = "red",
             linetype=0 , alpha = 0.01, ) +
   geom_point() + 
   theme(legend.position = "none",
         axis.text=element_text(size=11),
-        axis.title=element_text(size=14))
+        axis.title=element_text(size=14)) +
+  annotation_raster(img, xmin = 85, xmax = 217, ymin = 24.5, ymax = 32)
 
 
-# Plot of the results for above paths
+# Plot of the results for above paths (A)
+# Load img for plot illustration
+img1 <- readPNG("./Outputs/Figures/aboveTurbine.png")
+
 resAbove.df <- resultsRotationPvalueAbove.df[,2:4]
 
-above <- ggplot(resAbove.df, aes(x = as.integer(posObsValue), y = as.integer(bufferAroundTurbineMeter))) + 
-  coord_cartesian(xlim = c(1, 36), ylim = c(0, 1010)) +
+above <- ggplot(resAbove.df, aes(x = as.integer(bufferAroundTurbineMeter), y = as.integer(posObsValue))) + 
+  coord_cartesian(xlim = c(0, 1010), ylim = c(1, 36)) +
   expand_limits(x = 0, y = 0) +
-  scale_x_continuous("", limits = c(0,36), breaks = seq(from=0, to=36, by=5)) +
-  scale_y_continuous("Buffer size [m]", breaks = seq(from=0, to=1010, by=200)) +
+  scale_y_continuous("Position of the observed 
+proportion of locations", limits = c(0,36), breaks = seq(from=0, to=36, by=5)) +
+  scale_x_continuous("", breaks = seq(from=0, to=1010, by=200)) +
   ggtitle("Above rotor swept zone") +
   theme_light() +
-  geom_rect(aes(xmin = 0 + 0.5, xmax = 2 - 0.5, ymin = 0 - 0.5, ymax = 1000 + 5, fill = "red"), color = "red",
+  geom_rect(aes(xmin = 0 - 0.5, xmax = 1000 + 5, ymin = 0 + 0.4, ymax = 2 - 0.4, fill = "red"), color = "red",
             linetype=0 , alpha = 0.01, ) +
   geom_point() + 
   theme(legend.position = "none",
         axis.text=element_text(size=11),
-        axis.title=element_text(size=14))
-
+        axis.title=element_text(size=14)) +
+  annotation_raster(img1, xmin = 85, xmax = 217, ymin = 24.7, ymax = 38.4)
 
 
 # Panel plot
-resPlotS2 <- plot_grid(above, below, ncol = 1, nrow = 2, labels = c("(A)","(B)"))
-
-# Save plot
-resfactor = 3
-dev.copy(png, paste("./Outputs/AnalysisResults/MontfrechRotaRes.png", sep=""),res = 72*resfactor, height=1200*resfactor, width=500*resfactor)
-dev.off()
-
-
-
-# Optimization map
-load("./Outputs/Simulations/OptimABM_S2_6.Rdata")
-minAngleToExplore <- 1
-maxAngleToExplore <- 14 # Maximum angle vulture reach in thermals
-minDistanceToExplore <- 0
-maxDistanceToExplore <- 1000 #if in m for instance, adding 1000m. The larger you put, the longer in time to compute
-
-# FitQuality1 -> look for the fit of each simulations to the percentage obtained at 450m on observed data
-toTestParameters$fitQuality1 <- toTestParameters$fitValue1/
-  quantile(toTestParameters$fitValue1[toTestParameters$valueMapAvoidanceDistance < 0.01], 0.95, na.rm = T)  # <0.01 because == 0 can lead to mis-subsetting (double issue)
-# division by the percentage of points obtained by simulation of a ballistic movement (d = 0 & alpha doesn't matter)
-
-toTestParameters$fitQuality1[toTestParameters$fitQuality1>1] <- NA # Filter out all conditions that give worst result than no avoidance (ballistic movement)
-toTestParameters$fitQuality1 <- 1-toTestParameters$fitQuality1 # Reverse scale so best fit = 1
-
-# FitQuality2 -> look for the fit of each simulation with the same buffer in the observed data
-load("./Outputs/Simulations/nullSimulTracks.Rdata")
-toTestParameters <- toTestParameters %>% group_by(valueMapAvoidanceDistance) %>% 
-  mutate(fitQuality2 = ifelse(valueMapAvoidanceDistance == 0,
-                              NA,
-                              fitValue2/(percentPointsInBufferBelow - nrow(pointsInFarmCheck[!is.na(sp::over(SpatialPoints(pointsInFarmCheck[,1:2], proj4string = CRS("+proj=utm +zone=31 +datum=WGS84 +units=m +no_defs")), 
-                                                                                                            gBuffer(SpatialPoints(allWindTurbines[[4]]$dataCoordinatesTurbines.df.sp, proj4string = CRS("+proj=utm +zone=31 +datum=WGS84 +units=m +no_defs")),
-                                                                                                            width=unique(valueMapAvoidanceDistance), quadsegs = 100))),]) / nrow(pointsInFarmCheck))**2)) %>% 
-  ungroup()
-
-toTestParameters$fitQuality2[toTestParameters$fitQuality2>1] <- NA # Filter out all conditions that give worst result than no avoidance (ballistic movement)
-toTestParameters$fitQuality2 <- 1-toTestParameters$fitQuality2 # Reverse scale so best fit = 1
-
-
-# Plot
-rasterFitness <- ggplot(toTestParameters %>% filter(valueMapAvoidanceDistance > 0), aes(valueMapAvoidanceAngle, valueMapAvoidanceDistance, fill = fitQuality2)) +
-  geom_raster(interpolate = FALSE) +
-  geom_point(data = toTestParameters %>% filter(fitQuality1 == max(fitQuality1, na.rm = TRUE)),
-             mapping = aes( valueMapAvoidanceAngle, valueMapAvoidanceDistance), 
-             shape = 4, color = "white") +
-  scale_fill_viridis(na.value = "grey93",
-                     limits = c(0,1),
-                     name = "Fit quality") +
-  theme_light() +
-  theme(
-    plot.margin = unit(c(1,1,1,1), "cm"),
-    axis.ticks.x = element_blank(),
-    axis.ticks.y = element_blank(),
-    panel.grid.major = element_blank(),
-    panel.grid.minor = element_blank(),
-    panel.border = element_blank(),
-    aspect.ratio=1,
-    plot.title=element_text(hjust=0.5)
-  ) +
-  scale_x_continuous(breaks = scales::pretty_breaks(n = 8)) +
-  scale_y_continuous(breaks = scales::pretty_breaks(n = 8)) +
-  labs(y = "Perceptual range [m]", x = "Turning angle [°]") +
-  theme(axis.text=element_text(size=11),
-      axis.title=element_text(size=14))
-
-#
-# Show result
-rasterFitness
-
-
-plot_grid(resPlotS2, rasterFitness,
-          nrow = 1, ncol = 2,
-          labels = c("","(C)"))
-
-
-# Save the plot
-resfactor = 3
-dev.copy(png, paste("./Outputs/Simulations/optimMap_S2.png", sep=""),res = 72*resfactor, height=800*resfactor, width=500*resfactor)
-dev.off()
+# resPlotS2 <- plot_grid(above, below, ncol = 1, nrow = 2, labels = c("(A)","(B)"))
+# 
+# # Save plot
+# resfactor = 3
+# dev.copy(png, paste("./Outputs/AnalysisResults/MontfrechRotaRes.png", sep=""),res = 72*resfactor, height=1200*resfactor, width=500*resfactor)
+# dev.off()
 
 
 
-## Plot of the raster with buffered wind farm / topo and UD
+## Plot of the raster with buffered wind farm / topo and UD (C)
 f=4
 
 overlapUD_S2 <- raster::raster('./Outputs/Figures/overlapUD_S2.tif') 
@@ -629,8 +553,8 @@ turbineBuff <- gBuffer(allWindTurbines$S2$dataCoordinatesTurbines.df.sp, width =
 
 ## Plot the overlap
 topover <-  ggplot() +
-   geom_raster(data = topo_df, aes(x = x, y = y, fill = Elevation_Causses_norm)) +
-   scale_fill_gradientn(colours = terrain.colors(7)) +
+  geom_raster(data = topo_df, aes(x = x, y = y, fill = Elevation_Causses_norm)) +
+  scale_fill_gradientn(colours = terrain.colors(7)) +
   geom_tile(data = canyonRidge_df, aes(x = x, y = y, alpha=0.01)) +
   #geom_tile(data = canyonRidgeBuff_df, aes(x = x, y = y, alpha=0.01)) +
   annotate(geom="raster", x=over_df$x, y=over_df$y, alpha=0.6,
@@ -641,29 +565,170 @@ topover <-  ggplot() +
              size = 2,
              colour = "black") +
   geom_point(data = turbineBuff,
-               aes(x = turbineBuff@polygons[[1]]@Polygons[[1]]@coords[,1],
-                   y = turbineBuff@polygons[[1]]@Polygons[[1]]@coords[,2]),
+             aes(x = turbineBuff@polygons[[1]]@Polygons[[1]]@coords[,1],
+                 y = turbineBuff@polygons[[1]]@Polygons[[1]]@coords[,2]),
              size = 0.05) +
   scale_x_continuous("", breaks = NULL,expand = c(0.1, 0.1)) +
   scale_y_continuous("", breaks = NULL,expand = c(0.1, 0.1)) +
   theme_void() +
-  theme(legend.position = "none") #+
-  #annotation_scale(location = 'bl')
+  theme(legend.position = "none")
 
+
+
+# Plot of the optimization procedure (D)
+
+# Optimization map
+load("./Outputs/Simulations/OptimABM_S2_10_3.Rdata")
+minAngleToExplore <- 1
+maxAngleToExplore <- 14 # Maximum angle vulture reach in thermals
+minDistanceToExplore <- 0
+maxDistanceToExplore <- 1000 #if in m for instance, adding 1000m. The larger you put, the longer in time to compute
+
+# FitQuality1 -> look for the fit of each simulations to the percentage obtained at 450m on observed data
+toTestParameters$fitQuality1 <- toTestParameters$fitValue1/
+  quantile(toTestParameters$fitValue1[toTestParameters$valueMapAvoidanceDistance < 0.01], 0.95, na.rm = T)  # <0.01 because == 0 can lead to mis-subsetting (double issue)
+# division by the percentage of points obtained by simulation of a ballistic movement (d = 0 & alpha doesn't matter)
+
+toTestParameters$fitQuality1[toTestParameters$fitQuality1>1] <- NA # Filter out all conditions that give worst result than no avoidance (ballistic movement)
+toTestParameters$fitQuality1 <- 1-toTestParameters$fitQuality1 # Reverse scale so best fit = 1
+
+# FitQuality2 -> look for the fit of each simulation with the same buffer in the observed data
+load("./Outputs/Simulations/nullSimulTracks.Rdata")
+
+##Calculate % of points for each buffer for null simulations
+distanceVec <- seq(from = 50, to = maxDistanceToExplore, by = 50)
+percentInBufferNoAvoidance <- lapply(distanceVec, function(x){
+  nrow(pointsInFarmCheck[!is.na(sp::over(SpatialPoints(pointsInFarmCheck[,1:2], 
+                                                       proj4string = CRS("+proj=utm +zone=31 +datum=WGS84 +units=m +no_defs")), 
+                                         gBuffer(SpatialPoints(allWindTurbines[[4]]$dataCoordinatesTurbines.df.sp, 
+                                                               proj4string = CRS("+proj=utm +zone=31 +datum=WGS84 +units=m +no_defs")),
+                                                 width=x, quadsegs = 100))),]) / 
+    nrow(pointsInFarmCheck)})
+percentInBufferNoAvoidance <- cbind(distanceVec, unlist(percentInBufferNoAvoidance)) %>% as.data.frame()
+colnames(percentInBufferNoAvoidance) <- c("distance", "percentageNoAvoidance")
+
+
+toTestParameters <- toTestParameters %>% 
+  left_join(
+    percentInBufferNoAvoidance,
+    by = c("valueMapAvoidanceDistance" = "distance")
+  ) %>% 
+  mutate(fitQuality2 = fitValue2/(percentPointsInBufferBelow - percentageNoAvoidance)**2) %>% 
+  ungroup()
+
+toTestParameters$fitQuality2[toTestParameters$fitQuality2>1] <- NA # Filter out all conditions that give worst result than no avoidance (ballistic movement)
+toTestParameters$fitQuality2 <- 1-toTestParameters$fitQuality2 # Reverse scale so best fit = 1
+
+#Other fit qualities
+toTestParameters <- toTestParameters %>% 
+  mutate(
+    fitQualityv1 = fitValuev1/(percentInBufferNoAvoidance[1,2] - vectorObservedPercent[1])**2,
+    fitQualityv2 = fitValuev2/(percentInBufferNoAvoidance[2,2] - vectorObservedPercent[2])**2,
+    fitQualityv3 = fitValuev3/(percentInBufferNoAvoidance[3,2] - vectorObservedPercent[3])**2,
+    fitQualityv4 = fitValuev4/(percentInBufferNoAvoidance[4,2] - vectorObservedPercent[4])**2,
+    fitQualityv5 = fitValuev5/(percentInBufferNoAvoidance[5,2] - vectorObservedPercent[5])**2,
+    fitQualityv6 = fitValuev6/(percentInBufferNoAvoidance[6,2] - vectorObservedPercent[6])**2,
+    fitQualityv7 = fitValuev7/(percentInBufferNoAvoidance[7,2] - vectorObservedPercent[7])**2,
+    fitQualityv8 = fitValuev8/(percentInBufferNoAvoidance[8,2] - vectorObservedPercent[8])**2,
+    fitQualityv9 = fitValuev9/(percentInBufferNoAvoidance[9,2] - vectorObservedPercent[9])**2
+  ) %>% 
+  mutate(
+    fitQualityv1 = ifelse(fitQualityv1>1,NA,1-fitQualityv1),
+    fitQualityv2 = ifelse(fitQualityv2>1,NA,1-fitQualityv2),
+    fitQualityv3 = ifelse(fitQualityv3>1,NA,1-fitQualityv3),
+    fitQualityv4 = ifelse(fitQualityv4>1,NA,1-fitQualityv4),
+    fitQualityv5 = ifelse(fitQualityv5>1,NA,1-fitQualityv5),
+    fitQualityv6 = ifelse(fitQualityv6>1,NA,1-fitQualityv6),
+    fitQualityv7 = ifelse(fitQualityv7>1,NA,1-fitQualityv7),
+    fitQualityv8 = ifelse(fitQualityv8>1,NA,1-fitQualityv8),
+    fitQualityv9 = ifelse(fitQualityv9>1,NA,1-fitQualityv9)
+  )
+
+
+#Extract best fit value for all
+valueFit <- c()
+parameters <- c()
+distanceInterest <- c()
+for(value in 1:9){
+  valueOfInterest <- toTestParameters[,19+value]
+  valueOfInterest[valueOfInterest>1] <- NA
+  valueOfInterest <- 1-valueOfInterest
+  toReturn <- which(valueOfInterest > 0.95)
+  
+  #Save results
+  valueFit <- c(valueFit, valueOfInterest[toReturn])
+  parameters <- rbind(parameters, toTestParameters[toReturn,1:2])
+  distanceInterest <- c(distanceInterest, rep(percentInBufferNoAvoidance$distance[value], times = length(toReturn)))
+  
+}
+
+dfForPlotBestFit <- cbind(valueFit, parameters, distanceInterest)
+colnames(dfForPlotBestFit) <- c("Fit_quality", "Angle", "Perception_range", "Distance_to_turbine")
+
+# save(dfForPlotBestFit,
+#      file="./Outputs/Simulations/dfForPlotBestFit.Rdata")
+
+
+# Plot
+load("./Outputs/Simulations/dfForPlotBestFit.Rdata")
+
+resSimul <- ggplot(dfForPlotBestFit %>% filter(Angle<=14), aes(Angle, Perception_range, color = as.factor(Distance_to_turbine), label = as.factor(Distance_to_turbine))) + #shape = as.factor(Fit_class)
+  theme_light() +
+  ggtitle("") +
+  scale_color_viridis(discrete = TRUE, name = "Buffer size [m]") +
+  #scale_color_manual(values = cbbPalette, name = "Buffer size [m]") + 
+  #geom_text(hjust=-0.5, vjust=-0.5) +
+  geom_label_repel(aes(label = as.factor(Distance_to_turbine), hjust=0.5, vjust=0.5),
+                   nudge_x = .15,
+                   nudge_y = 1,
+                   min.segment.length = 0,
+                   box.padding = 0.35, 
+                   point.padding = 0.5,
+                   label.size = NA,
+                   segment.color = 'grey50',
+                   show.legend = FALSE) + 
+  geom_point(size = 2.5) +
+  #scale_shape_discrete(name = "Fit quality", labels =c("]0.950,0.975]", "]0.0.975,1]")) + #"]0.900,0.933]", "]0.933,0.966]","]0.966,1]"
+  scale_x_continuous(name = "Turning angle [°]", limits = c(1,14), breaks = seq(from=1, to=14, by=2)) + #scales::pretty_breaks(n = 8)
+  scale_y_continuous(name = "Perceptual range [m]", limits = c(0,800), breaks = scales::pretty_breaks(n = 8)) +
+  theme(plot.margin = unit(c(0.1,1.4,0.15,0.15), "cm"),
+        axis.text=element_text(size=11),
+        axis.title=element_text(size=14),
+        legend.direction = "horizontal",
+        legend.position = c(0.65,0.85),
+        legend.box.background = element_rect(color = NA,fill="white"),
+        legend.spacing.y = unit(-0.2, "cm"))
+
+
+resSimul
+
+# Save the plot
+resfactor = 3
+dev.copy(png, paste("./Outputs/Simulations/testoptimMap_S2_10_3.png", sep=""),res = 72*resfactor, height=450*resfactor, width=600*resfactor)
+dev.off()
+
+# plot_grid(resPlotS2, resSimul,
+#           nrow = 1, ncol = 2,
+#           labels = c("","(C)"))
+# 
+# # Save the plot
+# resfactor = 3
+# dev.copy(png, paste("./Outputs/Simulations/optimMap_S2.png", sep=""),res = 72*resfactor, height=800*resfactor, width=500*resfactor)
+# dev.off()
 
 
 # Plot for the 4 graphs
-
 plot_grid(above,topover, 
-          below, rasterFitness,
+          below, resSimul,
           nrow = 2, ncol = 2,
           labels = c("(A)","(C)","(B)","(D)"))
 
 
 # Save the plot
 resfactor = 3
-dev.copy(png, paste("./Outputs/Simulations/optimMap_S2.png", sep=""),res = 72*resfactor, height=800*resfactor, width=500*resfactor)
+dev.copy(png, paste("./Fig3_V4.png", sep=""),res = 72*resfactor, height=800*resfactor, width=500*resfactor)
 dev.off()
+
 
 
 
@@ -674,10 +739,15 @@ dev.off()
 #_________________________________________________________________
 
 
-#### Figure A1 - Distance to center of the colony ####
+#### Figure S1 - Distance to center of the colony ####
 
 ## see ys_03_HomeRanges script for dataset construction
 load("./Outputs/FilteringSummary/allIndMaxNSDCausses.Rdata")
+
+#Remove Beaufixe and Courage, as they didn't crossed any wind farm we remove them from DV estimates for simplicity in sample size
+allIndMaxDist <- allIndMaxDist %>% 
+  filter(indName != "Beaufixe",
+         indName != "Courage")
 
 # Plot and save the SDN max per day for all individuals
 plotAll <- ggplot(allIndMaxDist, aes(indAllDates,maxDist.v/1000, color = indName)) +
@@ -685,7 +755,7 @@ plotAll <- ggplot(allIndMaxDist, aes(indAllDates,maxDist.v/1000, color = indName
   guides(col= guide_legend(title= "Individuals' name:")) +
   xlab("Dates") +
   scale_y_continuous("Max distance per day from colony center [m]" , breaks = seq(0, 1000, by = 100)) +
-  geom_hline(yintercept=55, linetype="dashed", color = "black", size=0.5) +
+  geom_hline(yintercept=55, linetype="dashed", color = "black", linewidth=0.5) +
   theme_light()
 
 print(plotAll) # Show graph
@@ -696,253 +766,20 @@ print(plotAll) # Show graph
 #        width = 10)
 
 
+# Mean max distnace reached (Clarence and Rostand removed from the calculation as they are settle far from this colony)
+want <- allIndMaxDist %>% 
+  filter(indName != "Clarence",
+         indName != "Rostand")  %>%
+  group_by(indName) %>% 
+  summarise_at(vars(maxDist.v), list(mean = mean)) 
+
+mean(want$mean)
+sd(want$mean)
 
 
 
 
-#### Figure A2 - Superimposed home ranges ####
-
-
-# Elevation raster of the area
-elevation.rs <- raster("./Data/RawData/MNT_reduced.tif") # MNT
-slope.rs <- raster("./Data/RawData/Slope_reduced.tif") # SLOPS
-
-# Data with the coordinates of wind farms area
-load("./Data/RawData/AllWindFarms_Causses.Rdata")
-load("./Data/RawData/AllWindTurbines_Causses.Rdata")
-
-farmAreas <- SpatialPolygonsDataFrame(srl = cbind(allWindFarms[[1]]$farm.sP,
-                                                  allWindFarms[[4]]$farm.sP), ID = "S1","S2")
-
-# Raster of HR
-HR.rs <- raster('./Outputs/Figures/AllIndHR.tif')
-
-# MAP
-tm_shape(elevation.rs, bbox = HR.rs@extent) + # 
-  tm_raster(palette = "Greys", 
-            alpha = 1,
-            legend.show = F) +
-  tm_shape(slope.rs, bbox = HR.rs@extent) +
-  tm_raster(palette = "Greys",
-            alpha = 0.5,
-            legend.show = F) +
-  tm_shape(HR.rs) + 
-  tm_raster(palette = viridisLite::viridis(20),
-            alpha = 0.75,
-            n = 27,
-            labels = c("1","","","","5","","","","","10","","","","","15","","","","","20","","","","","25",""),
-            title = "Number of superimposed individual UD",
-            stretch.palette = TRUE,
-            legend.is.portrait = FALSE) + 
-  tm_shape(allWindFarms[[1]]$farm.sP) +
-  tm_polygons(col = "green",
-              alpha = 0.5) +
-  tm_layout(scale = 1,
-            legend.position = c("right","bottom"),
-            legend.bg.color = "white", legend.bg.alpha = 1, 
-            legend.frame = "gray50",
-            legend.text.size = 0.5,
-            title.size = 0.1) +
-  tm_shape(allWindTurbines[[1]]$dataCoordinatesTurbines.df.sp) +
-  tm_dots(col = "red",
-          alpha = 0.5,
-          shape = 13) +
-  tm_shape(allWindFarms[[4]]$farm.sP) +
-  tm_polygons(col = "green",
-              alpha = 0.5) +
-  tm_shape(allWindTurbines[[4]]$dataCoordinatesTurbines.df.sp) +
-  tm_dots(col = "red",
-          alpha = 0.5,
-          shape = 13) +
-  tm_shape(allWindFarms[[10]]$farm.sP) +
-  tm_polygons(col = "green",
-              alpha = 0.5) +
-  tm_shape(allWindTurbines[[10]]$dataCoordinatesTurbines.df.sp) +
-  tm_dots(col = "red",
-          alpha = 0.5,
-          shape = 13) +
-  tm_shape(allWindFarms[[11]]$farm.sP) +
-  tm_polygons(col = "green",
-              alpha = 0.5) +
-  tm_shape(allWindTurbines[[11]]$dataCoordinatesTurbines.df.sp) +
-  tm_dots(col = "red",
-          alpha = 0.5,
-          shape = 13)
-
-
-## FIND A BETTER BACKGROUND - OLIVIER?
-## ADD WIND FARM NAMES
-## INCREASE THE LEGEND NUMBERS
-
-
-
-
-
-
-
-
-#### Figure A3 - Panel plot of rotation results on all operating wind farms ####
-year <- c("2019", "2020", "2021", "allyears") #Combine the years we have data on 
-y = 4 # Choose the year you want the graphs on
-
-
-# Results for S1
-f = 1
-load(paste("./Outputs/AnalysisResults/RotationAnalysisResult2_", year[y],"_",allWindFarms[[f]]$name,".Rdata", sep = ""))
-
-# Plot of the results for below paths
-resBelow.df <- resultsRotationPvalueBelow.df[,2:4]
-
-below_S1 <- ggplot(resBelow.df, aes(x = as.integer(posObsValue), y = as.integer(bufferAroundTurbineMeter))) + 
-  coord_cartesian(xlim = c(1, 36), ylim = c(0, 1010)) +
-  expand_limits(x = 0, y = 0) +
-  scale_x_continuous("", limits = c(0,36), breaks = seq(from=0, to=36, by=5)) +
-  scale_y_continuous("", breaks = seq(from=0, to=1010, by=200)) +
-  ggtitle("Within rotor swept zone") +
-  theme_light() +
-  geom_rect(aes(xmin = 0 + 0.5, xmax = 2 - 0.5, ymin = 0 - 0.5, ymax = 1000 + 5, fill = "red"), color = "red",
-            linetype=0 , alpha = 0.01, ) +
-  geom_point() + 
-  theme(legend.position = "none",
-        axis.text=element_text(size=11),
-        axis.title=element_text(size=14),
-        plot.title = element_text(hjust = 0.5))
-
-
-# Plot of the results for above paths
-resAbove.df <- resultsRotationPvalueAbove.df[,2:4]
-
-above_S1 <- ggplot(resAbove.df, aes(x = as.integer(posObsValue), y = as.integer(bufferAroundTurbineMeter))) + 
-  coord_cartesian(xlim = c(1, 36), ylim = c(0, 1010)) +
-  expand_limits(x = 0, y = 0) +
-  scale_x_continuous("", limits = c(0,36), breaks = seq(from=0, to=36, by=5)) +
-  scale_y_continuous("Buffer size [m]", breaks = seq(from=0, to=1010, by=200)) +
-  ggtitle("Above rotor swept zone") +
-  theme_light() +
-  geom_rect(aes(xmin = 0 + 0.5, xmax = 2 - 0.5, ymin = 0 - 0.5, ymax = 1000 + 5, fill = "red"), color = "red",
-            linetype=0 , alpha = 0.01, ) +
-  geom_point() + 
-  theme(legend.position = "none",
-        axis.text=element_text(size=11),
-        axis.title=element_text(size=14),
-        plot.title = element_text(hjust = 0.5))
-#---
-
-
-# Results for S6
-f = 10
-load(paste("./Outputs/AnalysisResults/RotationAnalysisResult2_", year[y],"_",allWindFarms[[f]]$name,".Rdata", sep = ""))
-
-
-# Plot of the results for below paths
-resBelow.df <- resultsRotationPvalueBelow.df[,2:4]
-
-below_S6 <- ggplot(resBelow.df, aes(x = as.integer(posObsValue), y = as.integer(bufferAroundTurbineMeter))) + 
-  coord_cartesian(xlim = c(1, 36), ylim = c(0, 1010)) +
-  expand_limits(x = 0, y = 0) +
-  scale_x_continuous("", limits = c(0,36), breaks = seq(from=0, to=36, by=5)) +
-  scale_y_continuous("", breaks = seq(from=0, to=1010, by=200)) +
-  ggtitle("") +
-  theme_light() +
-  geom_rect(aes(xmin = 0 + 0.5, xmax = 2 - 0.5, ymin = 0 - 0.5, ymax = 1000 + 5, fill = "red"), color = "red",
-            linetype=0 , alpha = 0.01, ) +
-  geom_point() + 
-  theme(legend.position = "none",
-        axis.text=element_text(size=11),
-        axis.title=element_text(size=14))
-
-
-# Plot of the results for above paths
-resAbove.df <- resultsRotationPvalueAbove.df[,2:4]
-
-above_S6 <- ggplot(resAbove.df, aes(x = as.integer(posObsValue), y = as.integer(bufferAroundTurbineMeter))) + 
-  coord_cartesian(xlim = c(1, 36), ylim = c(0, 1010)) +
-  expand_limits(x = 0, y = 0) +
-  scale_x_continuous("", limits = c(0,36), breaks = seq(from=0, to=36, by=5)) +
-  scale_y_continuous("Buffer size [m]", breaks = seq(from=0, to=1010, by=200)) +
-  ggtitle("") +
-  theme_light() +
-  geom_rect(aes(xmin = 0 + 0.5, xmax = 2 - 0.5, ymin = 0 - 0.5, ymax = 1000 + 5, fill = "red"), color = "red",
-            linetype=0 , alpha = 0.01, ) +
-  geom_point() + 
-  theme(legend.position = "none",
-        axis.text=element_text(size=11),
-        axis.title=element_text(size=14))
-#---
-
-
-
-# Results for S7
-f = 11
-load(paste("./Outputs/AnalysisResults/RotationAnalysisResult2_", year[y],"_",allWindFarms[[f]]$name,".Rdata", sep = ""))
-
-
-# Plot of the results for below paths
-resBelow.df <- resultsRotationPvalueBelow.df[,2:4]
-
-below_S7 <- ggplot(resBelow.df, aes(x = as.integer(posObsValue), y = as.integer(bufferAroundTurbineMeter))) + 
-  coord_cartesian(xlim = c(1, 36), ylim = c(0, 1010)) +
-  expand_limits(x = 0, y = 0) +
-  scale_x_continuous("Position of the observed 
-proportion of points", limits = c(0,36), breaks = seq(from=0, to=36, by=5)) +
-  scale_y_continuous("", breaks = seq(from=0, to=1010, by=200)) +
-  ggtitle("") +
-  theme_light() +
-  geom_rect(aes(xmin = 0 + 0.5, xmax = 2 - 0.5, ymin = 0 - 0.5, ymax = 1000 + 5, fill = "red"), color = "red",
-            linetype=0 , alpha = 0.01, ) +
-  geom_point() + 
-  theme(legend.position = "none",
-        axis.text=element_text(size=11),
-        axis.title=element_text(size=14))
-
-
-# Plot of the results for above paths
-resAbove.df <- resultsRotationPvalueAbove.df[,2:4]
-
-above_S7 <- ggplot(resAbove.df, aes(x = as.integer(posObsValue), y = as.integer(bufferAroundTurbineMeter))) + 
-  coord_cartesian(xlim = c(1, 36), ylim = c(0, 1010)) +
-  expand_limits(x = 0, y = 0) +
-  scale_x_continuous("Position of the observed 
-proportion of points", limits = c(0,36), breaks = seq(from=0, to=36, by=5)) +
-  scale_y_continuous("Buffer size [m]", breaks = seq(from=0, to=1010, by=200)) +
-  ggtitle("") +
-  theme_light() +
-  geom_rect(aes(xmin = 0 + 0.5, xmax = 2 - 0.5, ymin = 0 - 0.5, ymax = 1000 + 5, fill = "red"), color = "red",
-            linetype=0 , alpha = 0.01, ) +
-  geom_point() + 
-  theme(legend.position = "none",
-        axis.text=element_text(size=11),
-        axis.title=element_text(size=14))
-#---
-
-
-
-### Panel plot for below and above paths for operating wind farms
-plot_grid(above_S1, below_S1, 
-          above_S6, below_S6, 
-          above_S7, below_S7,
-          ncol = 2, nrow = 3,
-        labels = c("(A)","",
-                   "(B)","",
-                   "(C)",""))
-
-
-resfactor = 3
-dev.copy(png, paste("./Outputs/AnalysisResults/AllFarmsRotaRes.png", sep=""),res = 72*resfactor, height=800*resfactor, width=550*resfactor)
-dev.off()
-
-
-
-
-
-
-
-
-
-
-
-
-#### Figure A4 - Panel plot of rotation results on simulated tracks for all operating farms  ####
+#### Figure S2 - Panel plot of rotation results on simulated tracks for all operating farms  ####
 
 directionStepAvoidance = seq(from=0, to=14, by=1) #Turning angle in degree when the avoidance area is reached - adapted to stepLength
 distanceAvoidance = seq(from=50, to=1000, by=50) # Distance minimal at which it should avoid a turbine (in meters)
@@ -959,13 +796,14 @@ load(list.files("./Outputs/Simulations/RotaRes_S1", paste("ABM_RotaRes_dir",dire
 # Plot of the results for simulations
 resBelow.df <- resultsRotationPvalueBelow.df[,2:4]
 
-plotS1_1 <- ggplot(resBelow.df, aes(x = as.integer(posObsValue), y = as.integer(bufferAroundTurbineMeter))) + 
-  scale_x_continuous("", limits = c(0,36), breaks = seq(from=0, to=36, by=5)) +
-  scale_y_continuous("Buffer size [m]", breaks = seq(from=0, to=1010, by=200)) +
+plotS1_1 <- ggplot(resBelow.df, aes(x = as.integer(bufferAroundTurbineMeter), y = as.integer(posObsValue))) + 
+  scale_y_continuous("Position of the observed
+proportion of locations", limits = c(0,36), breaks = seq(from=0, to=36, by=5)) +
+  scale_x_continuous("", breaks = seq(from=0, to=1010, by=200)) +
   #ggtitle(paste("La Beaume - Simulations Alpha = ",directionStepAvoidance[a[1]],", dist = ",distanceAvoidance[b])) +
   ggtitle(expression(paste("", alpha == 0, ", d = 450"))) +
   theme_light() +
-  geom_rect(aes(xmin = 0 + 0.5, xmax = 2 - 0.5, ymin = 0 - 0.5, ymax = 1000 + 5, fill = "red"), color = "red",
+  geom_rect(aes(xmin = 0 - 0.5, xmax = 1000 + 5, ymin = 0 + 0.4, ymax = 2 - 0.4, fill = "red"), color = "red",
             linetype=0 , alpha = 0.01, ) +
   geom_point() + 
   theme(legend.position = "none",
@@ -978,14 +816,14 @@ load(list.files("./Outputs/Simulations/RotaRes_S1", paste("ABM_RotaRes_dir",dire
 
 resBelow.df <- resultsRotationPvalueBelow.df[,2:4]
 
-plotS1_2 <- ggplot(resBelow.df, aes(x = as.integer(posObsValue), y = as.integer(bufferAroundTurbineMeter))) + 
-  scale_x_continuous("", limits = c(0,36), breaks = seq(from=0, to=36, by=5)) +
-  scale_y_continuous("", breaks = seq(from=0, to=1010, by=200)) +
-#   ggtitle(paste("
-# Alpha = ",directionStepAvoidance[a[2]],", dist = ",distanceAvoidance[b])) +
+plotS1_2 <- ggplot(resBelow.df, aes(x = as.integer(bufferAroundTurbineMeter), y = as.integer(posObsValue))) + 
+  scale_y_continuous("", limits = c(0,36), breaks = seq(from=0, to=36, by=5)) +
+  scale_x_continuous("", breaks = seq(from=0, to=1010, by=200)) +
+  #   ggtitle(paste("
+  # Alpha = ",directionStepAvoidance[a[2]],", dist = ",distanceAvoidance[b])) +
   ggtitle(expression(paste(alpha == 1, ", d = 450"))) +
   theme_light() +
-  geom_rect(aes(xmin = 0 + 0.5, xmax = 2 - 0.5, ymin = 0 - 0.5, ymax = 1000 + 5, fill = "red"), color = "red",
+  geom_rect(aes(xmin = 0 - 0.5, xmax = 1000 + 5, ymin = 0 + 0.4, ymax = 2 - 0.4, fill = "red"), color = "red",
             linetype=0 , alpha = 0.01, ) +
   geom_point() + 
   theme(legend.position = "none",
@@ -997,14 +835,14 @@ load(list.files("./Outputs/Simulations/RotaRes_S1", paste("ABM_RotaRes_dir",dire
 
 resBelow.df <- resultsRotationPvalueBelow.df[,2:4]
 
-plotS1_3 <- ggplot(resBelow.df, aes(x = as.integer(posObsValue), y = as.integer(bufferAroundTurbineMeter))) + 
-  scale_x_continuous("", limits = c(0,36), breaks = seq(from=0, to=36, by=5)) +
-  scale_y_continuous("", breaks = seq(from=0, to=1010, by=200)) +
-#   ggtitle(paste("
-# Alpha = ",directionStepAvoidance[a[3]],", dist = ",distanceAvoidance[b])) +
+plotS1_3 <- ggplot(resBelow.df, aes(x = as.integer(bufferAroundTurbineMeter), y = as.integer(posObsValue))) + 
+  scale_y_continuous("", limits = c(0,36), breaks = seq(from=0, to=36, by=5)) +
+  scale_x_continuous("", breaks = seq(from=0, to=1010, by=200)) +
+  #   ggtitle(paste("
+  # Alpha = ",directionStepAvoidance[a[3]],", dist = ",distanceAvoidance[b])) +
   ggtitle(expression(paste(alpha == 5, ", d = 450"))) +
   theme_light() +
-  geom_rect(aes(xmin = 0 + 0.5, xmax = 2 - 0.5, ymin = 0 - 0.5, ymax = 1000 + 5, fill = "red"), color = "red",
+  geom_rect(aes(xmin = 0 - 0.5, xmax = 1000 + 5, ymin = 0 + 0.4, ymax = 2 - 0.4, fill = "red"), color = "red",
             linetype=0 , alpha = 0.01, ) +
   geom_point() + 
   theme(legend.position = "none",
@@ -1017,14 +855,14 @@ load(list.files("./Outputs/Simulations/RotaRes_S1", paste("ABM_RotaRes_dir",dire
 
 resBelow.df <- resultsRotationPvalueBelow.df[,2:4]
 
-plotS1_4 <- ggplot(resBelow.df, aes(x = as.integer(posObsValue), y = as.integer(bufferAroundTurbineMeter))) + 
-  scale_x_continuous("", limits = c(0,36), breaks = seq(from=0, to=36, by=5)) +
-  scale_y_continuous("", breaks = seq(from=0, to=1010, by=200)) +
+plotS1_4 <- ggplot(resBelow.df, aes(x = as.integer(bufferAroundTurbineMeter), y = as.integer(posObsValue))) + 
+  scale_y_continuous("", limits = c(0,36), breaks = seq(from=0, to=36, by=5)) +
+  scale_x_continuous("", breaks = seq(from=0, to=1010, by=200)) +
   #   ggtitle(paste("
   # Alpha = ",directionStepAvoidance[a[3]],", dist = ",distanceAvoidance[b])) +
   ggtitle(expression(paste(alpha == 5, ", d = 50"))) +
   theme_light() +
-  geom_rect(aes(xmin = 0 + 0.5, xmax = 2 - 0.5, ymin = 0 - 0.5, ymax = 1000 + 5, fill = "red"), color = "red",
+  geom_rect(aes(xmin = 0 - 0.5, xmax = 1000 + 5, ymin = 0 + 0.4, ymax = 2 - 0.4, fill = "red"), color = "red",
             linetype=0 , alpha = 0.01, ) +
   geom_point() + 
   theme(legend.position = "none",
@@ -1040,14 +878,15 @@ load(list.files("./Outputs/Simulations/RotaRes_S2", paste("ABM_RotaRes_dir",dire
 # Plot of the results for simulations
 resBelow.df <- resultsRotationPvalueBelow.df[,2:4]
 
-plotS2_1 <- ggplot(resBelow.df, aes(x = as.integer(posObsValue), y = as.integer(bufferAroundTurbineMeter))) + 
-  scale_x_continuous("", limits = c(0,36), breaks = seq(from=0, to=36, by=5)) +
-  scale_y_continuous("Buffer size [m]", breaks = seq(from=0, to=1010, by=200)) +
-#   ggtitle(paste("Montfrech - Simulations","
-# Alpha = ",directionStepAvoidance[a[1]],", dist = ",distanceAvoidance[b])) +
+plotS2_1 <- ggplot(resBelow.df, aes(x = as.integer(bufferAroundTurbineMeter), y = as.integer(posObsValue))) + 
+  scale_y_continuous("Position of the observed
+proportion of locations", limits = c(0,36), breaks = seq(from=0, to=36, by=5)) +
+  scale_x_continuous("", breaks = seq(from=0, to=1010, by=200)) +
+  #   ggtitle(paste("Montfrech - Simulations","
+  # Alpha = ",directionStepAvoidance[a[1]],", dist = ",distanceAvoidance[b])) +
   ggtitle("") +
   theme_light() +
-  geom_rect(aes(xmin = 0 + 0.5, xmax = 2 - 0.5, ymin = 0 - 0.5, ymax = 1000 + 5, fill = "red"), color = "red",
+  geom_rect(aes(xmin = 0 - 0.5, xmax = 1000 + 5, ymin = 0 + 0.4, ymax = 2 - 0.4, fill = "red"), color = "red",
             linetype=0 , alpha = 0.01, ) +
   geom_point() + 
   theme(legend.position = "none")
@@ -1059,14 +898,14 @@ load(list.files("./Outputs/Simulations/RotaRes_S2", paste("ABM_RotaRes_dir",dire
 
 resBelow.df <- resultsRotationPvalueBelow.df[,2:4]
 
-plotS2_2 <- ggplot(resBelow.df, aes(x = as.integer(posObsValue), y = as.integer(bufferAroundTurbineMeter))) + 
-  scale_x_continuous("", limits = c(0,36), breaks = seq(from=0, to=36, by=5)) +
-  scale_y_continuous("", breaks = seq(from=0, to=1010, by=200)) +
-#   ggtitle(paste("
-# Alpha = ",directionStepAvoidance[a[2]],", dist = ",distanceAvoidance[b])) +
+plotS2_2 <- ggplot(resBelow.df, aes(x = as.integer(bufferAroundTurbineMeter), y = as.integer(posObsValue))) + 
+  scale_y_continuous("", limits = c(0,36), breaks = seq(from=0, to=36, by=5)) +
+  scale_x_continuous("", breaks = seq(from=0, to=1010, by=200)) +
+  #   ggtitle(paste("
+  # Alpha = ",directionStepAvoidance[a[2]],", dist = ",distanceAvoidance[b])) +
   ggtitle("") + 
   theme_light() +
-  geom_rect(aes(xmin = 0 + 0.5, xmax = 2 - 0.5, ymin = 0 - 0.5, ymax = 1000 + 5, fill = "red"), color = "red",
+  geom_rect(aes(xmin = 0 - 0.5, xmax = 1000 + 5, ymin = 0 + 0.4, ymax = 2 - 0.4, fill = "red"), color = "red",
             linetype=0 , alpha = 0.01, ) +
   geom_point() + 
   theme(legend.position = "none")
@@ -1077,14 +916,14 @@ load(list.files("./Outputs/Simulations/RotaRes_S2", paste("ABM_RotaRes_dir",dire
 
 resBelow.df <- resultsRotationPvalueBelow.df[,2:4]
 
-plotS2_3 <- ggplot(resBelow.df, aes(x = as.integer(posObsValue), y = as.integer(bufferAroundTurbineMeter))) + 
-  scale_x_continuous("", limits = c(0,36), breaks = seq(from=0, to=36, by=5)) +
-  scale_y_continuous("", breaks = seq(from=0, to=1010, by=200)) +
-#   ggtitle(paste("
-# Alpha = ",directionStepAvoidance[a[3]],", dist = ",distanceAvoidance[b])) +
+plotS2_3 <- ggplot(resBelow.df, aes(x = as.integer(bufferAroundTurbineMeter), y = as.integer(posObsValue))) + 
+  scale_y_continuous("", limits = c(0,36), breaks = seq(from=0, to=36, by=5)) +
+  scale_x_continuous("", breaks = seq(from=0, to=1010, by=200)) +
+  #   ggtitle(paste("
+  # Alpha = ",directionStepAvoidance[a[3]],", dist = ",distanceAvoidance[b])) +
   ggtitle("") +
   theme_light() +
-  geom_rect(aes(xmin = 0 + 0.5, xmax = 2 - 0.5, ymin = 0 - 0.5, ymax = 1000 + 5, fill = "red"), color = "red",
+  geom_rect(aes(xmin = 0 - 0.5, xmax = 1000 + 5, ymin = 0 + 0.4, ymax = 2 - 0.4, fill = "red"), color = "red",
             linetype=0 , alpha = 0.01, ) +
   geom_point() + 
   theme(legend.position = "none")
@@ -1096,14 +935,14 @@ load(list.files("./Outputs/Simulations/RotaRes_S2", paste("ABM_RotaRes_dir",dire
 
 resBelow.df <- resultsRotationPvalueBelow.df[,2:4]
 
-plotS2_4 <- ggplot(resBelow.df, aes(x = as.integer(posObsValue), y = as.integer(bufferAroundTurbineMeter))) + 
-  scale_x_continuous("", limits = c(0,36), breaks = seq(from=0, to=36, by=5)) +
-  scale_y_continuous("", breaks = seq(from=0, to=1010, by=200)) +
+plotS2_4 <- ggplot(resBelow.df, aes(x = as.integer(bufferAroundTurbineMeter), y = as.integer(posObsValue))) + 
+  scale_y_continuous("", limits = c(0,36), breaks = seq(from=0, to=36, by=5)) +
+  scale_x_continuous("", breaks = seq(from=0, to=1010, by=200)) +
   #   ggtitle(paste("
   # Alpha = ",directionStepAvoidance[a[3]],", dist = ",distanceAvoidance[b])) +
   ggtitle("") +
   theme_light() +
-  geom_rect(aes(xmin = 0 + 0.5, xmax = 2 - 0.5, ymin = 0 - 0.5, ymax = 1000 + 5, fill = "red"), color = "red",
+  geom_rect(aes(xmin = 0 - 0.5, xmax = 1000 + 5, ymin = 0 + 0.4, ymax = 2 - 0.4, fill = "red"), color = "red",
             linetype=0 , alpha = 0.01, ) +
   geom_point() + 
   theme(legend.position = "none")
@@ -1119,14 +958,15 @@ load(list.files("./Outputs/Simulations/RotaRes_S6", paste("ABM_RotaRes_dir",dire
 # Plot of the results for simulations
 resBelow.df <- resultsRotationPvalueBelow.df[,2:4]
 
-plotS6_1 <- ggplot(resBelow.df, aes(x = as.integer(posObsValue), y = as.integer(bufferAroundTurbineMeter))) + 
-  scale_x_continuous("", limits = c(0,36), breaks = seq(from=0, to=36, by=5)) +
-  scale_y_continuous("Buffer size [m]", breaks = seq(from=0, to=1010, by=200)) +
-#   ggtitle(paste("Mas de Naï - Simulations","
-# Alpha = ",directionStepAvoidance[a[1]],", dist = ",distanceAvoidance[b])) +
+plotS6_1 <- ggplot(resBelow.df, aes(x = as.integer(bufferAroundTurbineMeter), y = as.integer(posObsValue))) + 
+  scale_y_continuous("Position of the observed
+proportion of locations", limits = c(0,36), breaks = seq(from=0, to=36, by=5)) +
+  scale_x_continuous("", breaks = seq(from=0, to=1010, by=200))+
+  #   ggtitle(paste("Mas de Naï - Simulations","
+  # Alpha = ",directionStepAvoidance[a[1]],", dist = ",distanceAvoidance[b])) +
   ggtitle("") +
   theme_light() +
-  geom_rect(aes(xmin = 0 + 0.5, xmax = 2 - 0.5, ymin = 0 - 0.5, ymax = 1000 + 5, fill = "red"), color = "red",
+  geom_rect(aes(xmin = 0 - 0.5, xmax = 1000 + 5, ymin = 0 + 0.4, ymax = 2 - 0.4, fill = "red"), color = "red",
             linetype=0 , alpha = 0.01, ) +
   geom_point() + 
   theme(legend.position = "none")
@@ -1138,14 +978,14 @@ load(list.files("./Outputs/Simulations/RotaRes_S6", paste("ABM_RotaRes_dir",dire
 
 resBelow.df <- resultsRotationPvalueBelow.df[,2:4]
 
-plotS6_2 <- ggplot(resBelow.df, aes(x = as.integer(posObsValue), y = as.integer(bufferAroundTurbineMeter))) + 
-  scale_x_continuous("", limits = c(0,36), breaks = seq(from=0, to=36, by=5)) +
-  scale_y_continuous("", breaks = seq(from=0, to=1010, by=200)) +
-#   ggtitle(paste("
-# Alpha = ",directionStepAvoidance[a[2]],", dist = ",distanceAvoidance[b])) +
+plotS6_2 <- ggplot(resBelow.df, aes(x = as.integer(bufferAroundTurbineMeter), y = as.integer(posObsValue))) + 
+  scale_y_continuous("", limits = c(0,36), breaks = seq(from=0, to=36, by=5)) +
+  scale_x_continuous("", breaks = seq(from=0, to=1010, by=200)) +
+  #   ggtitle(paste("
+  # Alpha = ",directionStepAvoidance[a[2]],", dist = ",distanceAvoidance[b])) +
   ggtitle("") +
   theme_light() +
-  geom_rect(aes(xmin = 0 + 0.5, xmax = 2 - 0.5, ymin = 0 - 0.5, ymax = 1000 + 5, fill = "red"), color = "red",
+  geom_rect(aes(xmin = 0 - 0.5, xmax = 1000 + 5, ymin = 0 + 0.4, ymax = 2 - 0.4, fill = "red"), color = "red",
             linetype=0 , alpha = 0.01, ) +
   geom_point() + 
   theme(legend.position = "none")
@@ -1156,14 +996,14 @@ load(list.files("./Outputs/Simulations/RotaRes_S6", paste("ABM_RotaRes_dir",dire
 
 resBelow.df <- resultsRotationPvalueBelow.df[,2:4]
 
-plotS6_3 <- ggplot(resBelow.df, aes(x = as.integer(posObsValue), y = as.integer(bufferAroundTurbineMeter))) + 
-  scale_x_continuous("", limits = c(0,36), breaks = seq(from=0, to=36, by=5)) +
-  scale_y_continuous("", breaks = seq(from=0, to=1010, by=200)) +
-#   ggtitle(paste("
-# Alpha = ",directionStepAvoidance[a[3]],", dist = ",distanceAvoidance[b])) +
+plotS6_3 <- ggplot(resBelow.df, aes(x = as.integer(bufferAroundTurbineMeter), y = as.integer(posObsValue))) + 
+  scale_y_continuous("", limits = c(0,36), breaks = seq(from=0, to=36, by=5)) +
+  scale_x_continuous("", breaks = seq(from=0, to=1010, by=200)) +
+  #   ggtitle(paste("
+  # Alpha = ",directionStepAvoidance[a[3]],", dist = ",distanceAvoidance[b])) +
   ggtitle("") +
   theme_light() +
-  geom_rect(aes(xmin = 0 + 0.5, xmax = 2 - 0.5, ymin = 0 - 0.5, ymax = 1000 + 5, fill = "red"), color = "red",
+  geom_rect(aes(xmin = 0 - 0.5, xmax = 1000 + 5, ymin = 0 + 0.4, ymax = 2 - 0.4, fill = "red"), color = "red",
             linetype=0 , alpha = 0.01, ) +
   geom_point() + 
   theme(legend.position = "none")
@@ -1174,14 +1014,14 @@ load(list.files("./Outputs/Simulations/RotaRes_S6", paste("ABM_RotaRes_dir",dire
 
 resBelow.df <- resultsRotationPvalueBelow.df[,2:4]
 
-plotS6_4 <- ggplot(resBelow.df, aes(x = as.integer(posObsValue), y = as.integer(bufferAroundTurbineMeter))) + 
-  scale_x_continuous("", limits = c(0,36), breaks = seq(from=0, to=36, by=5)) +
-  scale_y_continuous("", breaks = seq(from=0, to=1010, by=200)) +
+plotS6_4 <- ggplot(resBelow.df, aes(x = as.integer(bufferAroundTurbineMeter), y = as.integer(posObsValue))) + 
+  scale_y_continuous("", limits = c(0,36), breaks = seq(from=0, to=36, by=5)) +
+  scale_x_continuous("", breaks = seq(from=0, to=1010, by=200)) +
   #   ggtitle(paste("
   # Alpha = ",directionStepAvoidance[a[3]],", dist = ",distanceAvoidance[b])) +
   ggtitle("") +
   theme_light() +
-  geom_rect(aes(xmin = 0 + 0.5, xmax = 2 - 0.5, ymin = 0 - 0.5, ymax = 1000 + 5, fill = "red"), color = "red",
+  geom_rect(aes(xmin = 0 - 0.5, xmax = 1000 + 5, ymin = 0 + 0.4, ymax = 2 - 0.4, fill = "red"), color = "red",
             linetype=0 , alpha = 0.01, ) +
   geom_point() + 
   theme(legend.position = "none")
@@ -1197,14 +1037,14 @@ load(list.files("./Outputs/Simulations/RotaRes_S7", paste("ABM_RotaRes_dir",dire
 # Plot of the results for simulations
 resBelow.df <- resultsRotationPvalueBelow.df[,2:4]
 
-plotS7_1 <- ggplot(resBelow.df, aes(x = as.integer(posObsValue), y = as.integer(bufferAroundTurbineMeter))) + 
-  scale_x_continuous("Position of the observed 
-proportion of points", limits = c(0,36) ,breaks = seq(from=0, to=36, by=5)) +
-  scale_y_continuous("Buffer size [m]", breaks = seq(from=0, to=1010, by=200)) +
+plotS7_1 <- ggplot(resBelow.df, aes(x = as.integer(bufferAroundTurbineMeter), y = as.integer(posObsValue))) + 
+  scale_y_continuous("Position of the observed
+proportion of locations", limits = c(0,36), breaks = seq(from=0, to=36, by=5)) +
+  scale_x_continuous("Buffer size [m]", breaks = seq(from=0, to=1010, by=200)) +
   #ggtitle(paste("Saint Affrique - Simulations","Alpha = ",directionStepAvoidance[a[1]],", dist = ",distanceAvoidance[b])) +
   ggtitle("") +
   theme_light() +
-  geom_rect(aes(xmin = 0 + 0.5, xmax = 2 - 0.5, ymin = 0 - 0.5, ymax = 1000 + 5, fill = "red"), color = "red",
+  geom_rect(aes(xmin = 0 - 0.5, xmax = 1000 + 5, ymin = 0 + 0.4, ymax = 2 - 0.4, fill = "red"), color = "red",
             linetype=0 , alpha = 0.01, ) +
   geom_point() + 
   theme(legend.position = "none")
@@ -1216,14 +1056,13 @@ load(list.files("./Outputs/Simulations/RotaRes_S7", paste("ABM_RotaRes_dir",dire
 
 resBelow.df <- resultsRotationPvalueBelow.df[,2:4]
 
-plotS7_2 <- ggplot(resBelow.df, aes(x = as.integer(posObsValue), y = as.integer(bufferAroundTurbineMeter))) + 
-  scale_x_continuous("Position of the observed 
-proportion of points", limits = c(0,36), breaks = seq(from=0, to=36, by=5)) +
-  scale_y_continuous("", breaks = seq(from=0, to=1010, by=200)) +
+plotS7_2 <- ggplot(resBelow.df, aes(x = as.integer(bufferAroundTurbineMeter), y = as.integer(posObsValue))) + 
+  scale_y_continuous("", limits = c(0,36), breaks = seq(from=0, to=36, by=5)) +
+  scale_x_continuous("Buffer size [m]", breaks = seq(from=0, to=1010, by=200)) +
   #ggtitle(paste("Alpha = ",directionStepAvoidance[a[2]],", dist = ",distanceAvoidance[b])) +
   ggtitle("") +
   theme_light() +
-  geom_rect(aes(xmin = 0 + 0.5, xmax = 2 - 0.5, ymin = 0 - 0.5, ymax = 1000 + 5, fill = "red"), color = "red",
+  geom_rect(aes(xmin = 0 - 0.5, xmax = 1000 + 5, ymin = 0 + 0.4, ymax = 2 - 0.4, fill = "red"), color = "red",
             linetype=0 , alpha = 0.01, ) +
   geom_point() + 
   theme(legend.position = "none")
@@ -1234,14 +1073,13 @@ load(list.files("./Outputs/Simulations/RotaRes_S7", paste("ABM_RotaRes_dir",dire
 
 resBelow.df <- resultsRotationPvalueBelow.df[,2:4]
 
-plotS7_3 <- ggplot(resBelow.df, aes(x = as.integer(posObsValue), y = as.integer(bufferAroundTurbineMeter))) + 
-  scale_x_continuous("Position of the observed
-proportion of points", limits = c(0,36) ,breaks = seq(from=0, to=36, by=5)) +
-  scale_y_continuous("", breaks = seq(from=0, to=1010, by=200)) +
+plotS7_3 <- ggplot(resBelow.df, aes(x = as.integer(bufferAroundTurbineMeter), y = as.integer(posObsValue))) + 
+  scale_y_continuous("", limits = c(0,36), breaks = seq(from=0, to=36, by=5)) +
+  scale_x_continuous("Buffer size [m]", breaks = seq(from=0, to=1010, by=200)) +
   #ggtitle(paste(expression(~ alpha = 1), directionStepAvoidance[a[3]],", dist = ",distanceAvoidance[b])) +
   ggtitle("") +
   theme_light() +
-  geom_rect(aes(xmin = 0 + 0.5, xmax = 2 - 0.5, ymin = 0 - 0.5, ymax = 1000 + 5, fill = "red"), color = "red",
+  geom_rect(aes(xmin = 0 - 0.5, xmax = 1000 + 5, ymin = 0 + 0.4, ymax = 2 - 0.4, fill = "red"), color = "red",
             linetype=0 , alpha = 0.01, ) +
   geom_point() + 
   theme(legend.position = "none")
@@ -1253,14 +1091,13 @@ load(list.files("./Outputs/Simulations/RotaRes_S7", paste("ABM_RotaRes_dir",dire
 
 resBelow.df <- resultsRotationPvalueBelow.df[,2:4]
 
-plotS7_4 <- ggplot(resBelow.df, aes(x = as.integer(posObsValue), y = as.integer(bufferAroundTurbineMeter))) + 
-  scale_x_continuous("Position of the observed
-proportion of points", limits = c(0,36) ,breaks = seq(from=0, to=36, by=5)) +
-  scale_y_continuous("", breaks = seq(from=0, to=1010, by=200)) +
+plotS7_4 <- ggplot(resBelow.df, aes(x = as.integer(bufferAroundTurbineMeter), y = as.integer(posObsValue))) + 
+  scale_y_continuous("", limits = c(0,36), breaks = seq(from=0, to=36, by=5)) +
+  scale_x_continuous("Buffer size [m]", breaks = seq(from=0, to=1010, by=200)) +
   #ggtitle(paste(expression(~ alpha = 1), directionStepAvoidance[a[3]],", dist = ",distanceAvoidance[b])) +
   ggtitle("") +
   theme_light() +
-  geom_rect(aes(xmin = 0 + 0.5, xmax = 2 - 0.5, ymin = 0 - 0.5, ymax = 1000 + 5, fill = "red"), color = "red",
+  geom_rect(aes(xmin = 0 - 0.5, xmax = 1000 + 5, ymin = 0 + 0.4, ymax = 2 - 0.4, fill = "red"), color = "red",
             linetype=0 , alpha = 0.01, ) +
   geom_point() + 
   theme(legend.position = "none")
@@ -1280,9 +1117,165 @@ plot_grid(plotS1_1, plotS1_2, plotS1_3, plotS1_4,
                      "(D)","","","")) 
 
 
-resfactor = 3
-dev.copy(png, paste("./Outputs/AnalysisResults/DistriPanelPlot_SimuOWF_1.png", sep=""),res = 72*resfactor, height=950*resfactor, width=770*resfactor)
-dev.off()
+# resfactor = 3
+# dev.copy(png, paste("./Outputs/AnalysisResults/DistriPanelPlot_SimuOWF_2.png", sep=""),res = 72*resfactor, height=950*resfactor, width=770*resfactor)
+# dev.off()
+
+
+
+
+
+
+#### Figure S3 - Panel plot of rotation results on all operating wind farms ####
+year <- c("2019", "2020", "2021", "allyears") #Combine the years we have data on 
+y = 4 # Choose the year you want the graphs on
+
+
+# Results for S1
+f = 1
+load(paste("./Outputs/AnalysisResults/RotationAnalysisResult2_", year[y],"_",allWindFarms[[f]]$name,".Rdata", sep = ""))
+
+# Plot of the results for below paths
+resBelow.df <- resultsRotationPvalueBelow.df[,2:4]
+
+below_S1 <- ggplot(resBelow.df, aes(x = as.integer(bufferAroundTurbineMeter), y = as.integer(posObsValue))) + 
+  coord_cartesian(xlim = c(0, 1010), ylim = c(1, 36)) +
+  expand_limits(x = 0, y = 0) +
+  scale_y_continuous("", limits = c(0,36), breaks = seq(from=0, to=36, by=5)) +
+  scale_x_continuous("", breaks = seq(from=0, to=1010, by=200)) +
+  ggtitle("Within rotor swept zone") +
+  theme_light() +
+  geom_rect(aes(xmin = 0 - 0.5, xmax = 1000 + 5, ymin = 0 + 0.4, ymax = 2 - 0.4, fill = "red"), color = "red",
+            linetype=0 , alpha = 0.01, ) +
+  geom_point() + 
+  theme(legend.position = "none",
+        axis.text=element_text(size=11),
+        axis.title=element_text(size=14),
+        plot.title = element_text(hjust = 0.5))
+
+
+# Plot of the results for above paths
+resAbove.df <- resultsRotationPvalueAbove.df[,2:4]
+
+above_S1 <- ggplot(resAbove.df, aes(x = as.integer(bufferAroundTurbineMeter), y = as.integer(posObsValue))) + 
+  coord_cartesian(xlim = c(0, 1010), ylim = c(1, 36)) +
+  expand_limits(x = 0, y = 0) +
+  scale_y_continuous("Position of the observed 
+proportion of locations", limits = c(0,36), breaks = seq(from=0, to=36, by=5)) +
+  scale_x_continuous("", breaks = seq(from=0, to=1010, by=200)) +
+  ggtitle("Above rotor swept zone") +
+  theme_light() +
+  geom_rect(aes(xmin = 0 - 0.5, xmax = 1000 + 5, ymin = 0 + 0.4, ymax = 2 - 0.4, fill = "red"), color = "red",
+            linetype=0 , alpha = 0.01, ) +
+  geom_point() + 
+  theme(legend.position = "none",
+        axis.text=element_text(size=11),
+        axis.title=element_text(size=14),
+        plot.title = element_text(hjust = 0.5))
+#---
+
+
+# Results for S6
+f = 10
+load(paste("./Outputs/AnalysisResults/RotationAnalysisResult2_", year[y],"_",allWindFarms[[f]]$name,".Rdata", sep = ""))
+
+
+# Plot of the results for below paths
+resBelow.df <- resultsRotationPvalueBelow.df[,2:4]
+
+below_S6 <- ggplot(resBelow.df, aes(x = as.integer(bufferAroundTurbineMeter), y = as.integer(posObsValue))) + 
+  coord_cartesian(xlim = c(0, 1010), ylim = c(1, 36)) +
+  expand_limits(x = 0, y = 0) +
+  scale_y_continuous("", limits = c(0,36), breaks = seq(from=0, to=36, by=5)) +
+  scale_x_continuous("", breaks = seq(from=0, to=1010, by=200)) +
+  ggtitle("") +
+  theme_light() +
+  geom_rect(aes(xmin = 0 - 0.5, xmax = 1000 + 5, ymin = 0 + 0.4, ymax = 2 - 0.4, fill = "red"), color = "red",
+            linetype=0 , alpha = 0.01, ) +
+  geom_point() + 
+  theme(legend.position = "none",
+        axis.text=element_text(size=11),
+        axis.title=element_text(size=14))
+
+
+# Plot of the results for above paths
+resAbove.df <- resultsRotationPvalueAbove.df[,2:4]
+
+above_S6 <- ggplot(resAbove.df, aes(x = as.integer(bufferAroundTurbineMeter), y = as.integer(posObsValue))) + 
+  coord_cartesian(xlim = c(0, 1010), ylim = c(1, 36)) +
+  expand_limits(x = 0, y = 0) +
+  scale_y_continuous("Position of the observed 
+proportion of locations", limits = c(0,36), breaks = seq(from=0, to=36, by=5)) +
+  scale_x_continuous("", breaks = seq(from=0, to=1010, by=200)) +
+  ggtitle("") +
+  theme_light() +
+  geom_rect(aes(xmin = 0 - 0.5, xmax = 1000 + 5, ymin = 0 + 0.4, ymax = 2 - 0.4, fill = "red"), color = "red",
+            linetype=0 , alpha = 0.01, ) +
+  geom_point() + 
+  theme(legend.position = "none",
+        axis.text=element_text(size=11),
+        axis.title=element_text(size=14))
+#---
+
+
+
+# Results for S7
+f = 11
+load(paste("./Outputs/AnalysisResults/RotationAnalysisResult2_", year[y],"_",allWindFarms[[f]]$name,".Rdata", sep = ""))
+
+
+# Plot of the results for below paths
+resBelow.df <- resultsRotationPvalueBelow.df[,2:4]
+
+below_S7 <- ggplot(resBelow.df, aes(x = as.integer(bufferAroundTurbineMeter), y = as.integer(posObsValue))) + 
+  coord_cartesian(xlim = c(0, 1010), ylim = c(1, 36)) +
+  expand_limits(x = 0, y = 0) +
+  scale_y_continuous("", limits = c(0,36), breaks = seq(from=0, to=36, by=5)) +
+  scale_x_continuous("Buffer size [m]", breaks = seq(from=0, to=1010, by=200)) +
+  ggtitle("") +
+  theme_light() +
+  geom_rect(aes(xmin = 0 - 0.5, xmax = 1000 + 5, ymin = 0 + 0.4, ymax = 2 - 0.4, fill = "red"), color = "red",
+            linetype=0 , alpha = 0.01, ) +
+  geom_point() + 
+  theme(legend.position = "none",
+        axis.text=element_text(size=11),
+        axis.title=element_text(size=14))
+
+
+# Plot of the results for above paths
+resAbove.df <- resultsRotationPvalueAbove.df[,2:4]
+
+above_S7 <- ggplot(resAbove.df, aes(x = as.integer(bufferAroundTurbineMeter), y = as.integer(posObsValue))) + 
+  coord_cartesian(xlim = c(0, 1010), ylim = c(1, 36)) +
+  expand_limits(x = 0, y = 0) +
+  scale_y_continuous("Position of the observed 
+proportion of locations", limits = c(0,36), breaks = seq(from=0, to=36, by=5)) +
+  scale_x_continuous("Buffer size [m]", breaks = seq(from=0, to=1010, by=200)) +
+  ggtitle("") +
+  theme_light() +
+  geom_rect(aes(xmin = 0 - 0.5, xmax = 1000 + 5, ymin = 0 + 0.4, ymax = 2 - 0.4, fill = "red"), color = "red",
+            linetype=0 , alpha = 0.01, ) +
+  geom_point() + 
+  theme(legend.position = "none",
+        axis.text=element_text(size=11),
+        axis.title=element_text(size=14))
+#---
+
+
+
+### Panel plot for below and above paths for operating wind farms
+plot_grid(above_S1, below_S1, 
+          above_S6, below_S6, 
+          above_S7, below_S7,
+          ncol = 2, nrow = 3,
+          labels = c("(A)","",
+                     "(B)","",
+                     "(C)",""))
+
+
+# resfactor = 3
+# dev.copy(png, paste("./Outputs/AnalysisResults/AllFarmsRotaRes.png", sep=""),res = 72*resfactor, height=800*resfactor, width=550*resfactor)
+# dev.off()
 
 
 
@@ -1290,8 +1283,7 @@ dev.off()
 
 
 
-
-#### Table A1 - Summary vultures' data  ####
+#### Table S1 - Summary vultures' data  ####
 
 # Load information data for these individuals
 vultData.df <- read.csv("./Data/RawData/Ind_Data_GVCausses.csv",h=T, sep = ";")
@@ -1300,6 +1292,9 @@ vultData.df <- vultData.df[-nrow(vultData.df),] # Remove last row because of imp
 # Estimate the day they have been followed on
 vultData.df$date_diff <- as.Date(as.character(vultData.df$LastLocDay), format="%Y-%m-%d")-
   as.Date(as.character(vultData.df$FirstLocDay), format="%Y-%m-%d")
+
+# Remove Beaufixe and Courage
+vultData.df <- vultData.df[-c(2,7),]
 
 # Extract Individuals name
 individualName <- c()
@@ -1344,16 +1339,31 @@ for (f in farmnb){
     pointsInFarm <- allPointsInFarm
   }
   
+  
+  ## -- Give unique bout numbers
+  
+  boutstart <- pointsInFarm@data[1:nrow(pointsInFarm@data)-1,]$Bout # remove the last
+  boutend <-  pointsInFarm@data[2:nrow(pointsInFarm@data),]$Bout# remove the first
+  notMatch <- which(ifelse(boutstart == boutend,1,0) == 0) # Match both time to estimate interval
+  startBoutIn.v  <- c(1, notMatch + 1) # Give the number fo the interval so real time = interval + 1
+  
+  #Create independent bout as soon as time interval between two consecutive points is > 30s (bout name = position of the starting points in the list)
+  pointsInFarm@data$uniqueBout <- NA
+  pointsInFarm@data$uniqueBout[startBoutIn.v] <- startBoutIn.v 
+  pointsInFarm@data$uniqueBout <- zoo::na.locf(pointsInFarm@data$uniqueBout)
+  
+  ## --
+  
   # Count number of track per ind
   summaryBout <- pointsInFarm@data %>% 
     group_by(ID) %>% 
-    summarise(CountTot = length(unique(Bout)))
+    summarise(CountTot = length(unique(uniqueBout)))
   
   # Count number of track per ind that crossed the threshold
   summaryBoutAtRisk <- pointsInFarm@data %>% 
     group_by(ID) %>% 
     filter(.,aboveThresholdAltitude == 0) %>%
-    summarise(CountTot = length(unique(Bout)))
+    summarise(CountTot = length(unique(uniqueBout)))
   
   # Fill the df
   for (n in 1:nrow(SummaryVultData.df)){
@@ -1363,8 +1373,8 @@ for (f in farmnb){
     for (i in 1:nrow(summaryBout)){
       hyfenindices <- str_locate_all(pattern ='-', summaryBout$ID[i]) # locate the - in the name
       name2 <- substr(summaryBout$ID[i], 
-                     as.integer(hyfenindices[[1]][3,1])+1, 
-                     as.integer(hyfenindices[[1]][4,1])-1)
+                      as.integer(hyfenindices[[1]][3,1])+1, 
+                      as.integer(hyfenindices[[1]][4,1])-1)
       allname[i] <- name2
     }
     
@@ -1377,7 +1387,7 @@ for (f in farmnb){
     }
   }
 }
-  
+
 
 
 
@@ -1400,11 +1410,11 @@ colnames(SummaryVultData.df) <- c("Vulture names",
                                   "nb paths in Saint Affrique")
 
 colnames(SummaryVultData_atRisk) <- c("Vulture names",
-                                  "Nb days of tracking",
-                                  "nb paths in La Beaume",
-                                  "nb paths in Montfrech",
-                                  "nb paths in Mas de Naï",
-                                  "nb paths in Saint Affrique")
+                                      "Nb days of tracking",
+                                      "nb paths in La Beaume",
+                                      "nb paths in Montfrech",
+                                      "nb paths in Mas de Naï",
+                                      "nb paths in Saint Affrique")
 
 # Save the summary table
 write.csv(SummaryVultData.df,
@@ -1415,7 +1425,7 @@ write.csv(SummaryVultData_atRisk,
 
 
 
-#### Table A2 - Summary wind farms data  ####
+#### Table S2 - Summary wind farms data  ####
 load("./Data/RawData/AllWindFarms_Causses.Rdata")
 load("./Data/RawData/AllWindTurbines_Causses.Rdata")
 
@@ -1455,9 +1465,9 @@ for (f in farmnb){
   summaryBout <- pointsInFarm@data %>% 
     group_by(Bout) %>% 
     summarise(
-    CountAboveThreshold = sum(as.numeric(as.character(aboveThresholdAltitude))),
-    CountTot = n()
-  )
+      CountAboveThreshold = sum(as.numeric(as.character(aboveThresholdAltitude))),
+      CountTot = n()
+    )
   
   summaryBoutAtRisk <- pointsInFarm@data %>% 
     group_by(ID) %>% 
@@ -1470,18 +1480,18 @@ for (f in farmnb){
   # Loop on the 3 years
   for (j in 1:length(allFiles)){
     c = c+1 # Counter
-
+    
     # Load iteratively the data
     load(allFiles[j])
-
+    
     # Take info about bouts
     summaryBout <- pointsInFarm@data %>%
       group_by(Bout) %>%
       summarise(
-      CountAboveThreshold = sum(as.numeric(as.character(aboveThresholdAltitude))),
-      CountTot = n()
-    )
-
+        CountAboveThreshold = sum(as.numeric(as.character(aboveThresholdAltitude))),
+        CountTot = n()
+      )
+    
     mixedBout <- summaryBout$Bout[summaryBout$CountAboveThreshold != 0 &
                                     summaryBout$CountAboveThreshold != summaryBout$CountTot] # number of mixed path (i.e. that cross the altitude threshold)
     
@@ -1541,101 +1551,4 @@ colnames(SummaryFarmData.df) <- c("Wind farm names",
 # Save the summary table
 write.csv(SummaryFarmData.df,
           file = "./Outputs/Figures/SummaryFarmData.csv")
-
-
-
-
-
-#### Figure Sxx - Specific case of La Beaume before & after October 2019 ####
-#
-# before = wind turbines present but not operating
-# after = wind turbines present & operating
-# see ys_04_RotationAnalysis script for analysis
-
-
-# Specific results before october 2019 in La Beaume
-load("./Outputs/AnalysisResults/RotationAnalysisResult_BFOct2019_S1.Rdata")
-
-# Plot of the results for below paths
-resBelow.df <- resultsRotationPvalueBelow.df[,2:4]
-
-plotBelow1 <- ggplot(resBelow.df, aes(x = as.numeric(posObsValue), y = as.numeric(bufferAroundTurbineMeter))) + 
-  coord_cartesian(xlim = c(1, 36), ylim = c(0, 1010)) +
-  expand_limits(x = 0, y = 0) +
-  scale_x_continuous("Position of the observed proportion of points",breaks = seq(from=0, to=36, by=5)) +
-  scale_y_continuous("Buffer size", breaks = seq(from=0, to=1010, by=200)) +
-  ggtitle("Below altitude threshold") +
-  theme_light() +
-  geom_rect(aes(xmin = 0 + 0.5, xmax = 2 - 0.5, ymin = 0 - 0.5, ymax = 1000 + 5, fill = "red"), color = "red",
-            linetype=0 , alpha = 0.01, ) +
-  geom_point() + 
-  theme(legend.position = "none")
-
-
-# Plot of the results for above paths
-resAbove.df <- resultsRotationPvalueAbove.df[,2:4]
-
-plotAbove1 <- ggplot(resAbove.df, aes(x = as.numeric(posObsValue), y = as.numeric(bufferAroundTurbineMeter))) + 
-  coord_cartesian(xlim = c(1, 36), ylim = c(0, 1010)) +
-  expand_limits(x = 0, y = 0) +
-  scale_x_continuous("",breaks = seq(from=0, to=36, by=5)) +
-  scale_y_continuous("Buffer size", breaks = seq(from=0, to=1010, by=200)) +
-  ggtitle("Before October 2019
-Above altitude threshold") +
-  theme_light() +
-  geom_rect(aes(xmin = 0 + 0.5, xmax = 2 - 0.5, ymin = 0 - 0.5, ymax = 1000 + 5, fill = "red"), color = "red",
-            linetype=0 , alpha = 0.01, ) +
-  geom_point() + 
-  theme(legend.position = "none")
-
-
-
-
-
-# Specific results after october 2019 in La Beaume
-load("./Outputs/AnalysisResults/RotationAnalysisResult_AFOct2019_S1.Rdata")
-
-
-# Plot of the results for below paths
-resBelow.df <- resultsRotationPvalueBelow.df[,2:4]
-
-plotBelow2 <- ggplot(resBelow.df, aes(x = as.numeric(posObsValue), y = as.numeric(bufferAroundTurbineMeter))) + 
-  coord_cartesian(xlim = c(1, 36), ylim = c(0, 1010)) +
-  expand_limits(x = 0, y = 0) +
-  scale_x_continuous("Position of the observed proportion of points",breaks = seq(from=0, to=36, by=5)) +
-  scale_y_continuous("", breaks = seq(from=0, to=1010, by=200)) +
-  ggtitle("Below altitude threshold") +
-  theme_light() +
-  geom_rect(aes(xmin = 0 + 0.5, xmax = 2 - 0.5, ymin = 0 - 0.5, ymax = 1000 + 5, fill = "red"), color = "red",
-            linetype=0 , alpha = 0.01, ) +
-  geom_point() + 
-  theme(legend.position = "none")
-
-
-# Plot of the results for above paths
-resAbove.df <- resultsRotationPvalueAbove.df[,2:4]
-
-plotAbove2 <- ggplot(resAbove.df, aes(x = as.numeric(posObsValue), y = as.numeric(bufferAroundTurbineMeter))) + 
-  coord_cartesian(xlim = c(1, 36), ylim = c(0, 1010)) +
-  expand_limits(x = 0, y = 0) +
-  scale_x_continuous("",breaks = seq(from=0, to=36, by=5)) +
-  scale_y_continuous("", breaks = seq(from=0, to=1010, by=200)) +
-  ggtitle("After October 2019
-Above altitude threshold") +
-  theme_light() +
-  geom_rect(aes(xmin = 0 + 0.5, xmax = 2 - 0.5, ymin = 0 - 0.5, ymax = 1000 + 5, fill = "red"), color = "red",
-            linetype=0 , alpha = 0.01, ) +
-  geom_point() + 
-  theme(legend.position = "none")
-
-
-## Plot of above/below rotation results
-plot_grid(plotAbove1,plotAbove2,plotBelow1,plotBelow2,
-          ncol = 2, nrow = 2) ## combine plot
-
-## Save plot
-# resfactor = 3
-# dev.copy(png, paste("./Outputs/AnalysisResults/DistriPlot_BFAF_2019_S1.png", sep=""),res = 72*resfactor, height=550*resfactor, width=800*resfactor)
-# dev.off()
-
 
